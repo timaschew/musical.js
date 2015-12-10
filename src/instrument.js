@@ -615,40 +615,31 @@ Instrument.prototype.play = function(abcstring, options, callback) {
     return;
   }
 
-  if ('string' == typeof(abcstring)) {
-    songs.push(abcstring);
-  }
-
   if ('object' == typeof(options)) {
     // Copy own properties into an options object.
     for (k in options) if (options.hasOwnProperty(k)) {
       opts[k] = options[k];
     }
-    // If a song is supplied by options object, process it.
-    if (opts.song) {
-      songs.push(opts.song);
-    }
   }
 
   // Parse any number of ABC files as input.
-  for (var i=0; i < songs.length; ++i) {
-    // Handle splitting of ABC subfiles at X: lines.
-    subfile = songs[i].split(/\n(?=X:)/);
-    for (k = 0; k < subfile.length; ++k) {
-      abcfile = parseABCFile(subfile[k]);
-      if (!abcfile) continue;
-      // Take tempo markings from the first file, and share them.
-      if (!opts.tempo && abcfile.tempo) {
-        opts.tempo = abcfile.tempo;
-        if (abcfile.unitbeat) {
-          opts.tempo *= abcfile.unitbeat / (abcfile.unitnote || 1);
-        }
+  // Handle splitting of ABC subfiles at X: lines.
+  subfile = abcstring.split(/\n(?=X:)/);
+  for (k = 0; k < subfile.length; ++k) {
+    abcfile = parseABCFile(subfile[k]);
+    if (!abcfile) continue;
+    // Take tempo markings from the first file, and share them.
+    if (!opts.tempo && abcfile.tempo) {
+      opts.tempo = abcfile.tempo;
+      if (abcfile.unitbeat) {
+        opts.tempo *= abcfile.unitbeat / (abcfile.unitnote || 1);
       }
-      // Ignore files without songs.
-      if (!abcfile.voice) continue;
-      files.push(abcfile);
     }
+    // Ignore files without songs.
+    if (!abcfile.voice) continue;
+    files.push(abcfile);
   }
+
   // Default tempo to 120 if nothing else is specified.
   if (!opts.tempo) { opts.tempo = 120; }
   // Default volume to 1 if nothing is specified.
