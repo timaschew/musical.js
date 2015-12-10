@@ -617,9 +617,14 @@ Instrument.prototype.tone = function(pitch, duration, velocity, delay, timbre, o
 Instrument.prototype.schedule = function(delay, callback) {
   this._callbackSet.push({ time: this.now() + delay, callback: callback });
 };
+
 // The high-level sequencing method.
 Instrument.prototype.play = function(abcstring, options, callback) {
   var files = parseABCfilesFromString(abcstring);
+  this.playFromFiles(files, options, callback);
+};
+
+Instrument.prototype.playFromFiles = function(files, options, callback) {
   var songs = [],
       done = callback,
       opts = {}, subfile,
