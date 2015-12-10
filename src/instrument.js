@@ -600,37 +600,40 @@ Instrument.prototype.schedule = function(delay, callback) {
   this._callbackSet.push({ time: this.now() + delay, callback: callback });
 };
 // The high-level sequencing method.
-Instrument.prototype.play = function(abcstring) {
-  var args = Array.prototype.slice.call(arguments),
-      done = null,
+Instrument.prototype.play = function(abcstring, options, callback) {
+  var songs = [],
+      done = callback,
       opts = {}, subfile,
       abcfile, argindex, tempo, timbre, k, delay, maxdelay = 0, attenuate,
       voicename, stems, ni, vn, j, stem, note, beatsecs, secs, v, files = [];
   // Look for continuation as last argument.
-  if (args.length && 'function' == typeof(args[args.length - 1])) {
-    done = args.pop();
+  if (callback == null && 'function' == typeof(options)) {
+    done = options;
   }
   if (!this._atop) {
     if (done) { done(); }
     return;
   }
-  // Look for options as first object.
-  argindex = 0;
-  if ('object' == typeof(args[0])) {
+
+  if ('string' == typeof(abcstring)) {
+    songs.push(abcstring);
+  }
+
+  if ('object' == typeof(options)) {
     // Copy own properties into an options object.
-    for (k in args[0]) if (args[0].hasOwnProperty(k)) {
-      opts[k] = args[0][k];
+    for (k in options) if (options.hasOwnProperty(k)) {
+      opts[k] = options[k];
     }
-    argindex = 1;
     // If a song is supplied by options object, process it.
     if (opts.song) {
-      args.push(opts.song);
+      songs.push(opts.song);
     }
   }
+
   // Parse any number of ABC files as input.
-  for (; argindex < args.length; ++argindex) {
+  for (var i=0; i < songs.length; ++i) {
     // Handle splitting of ABC subfiles at X: lines.
-    subfile = args[argindex].split(/\n(?=X:)/);
+    subfile = songs[i].split(/\n(?=X:)/);
     for (k = 0; k < subfile.length; ++k) {
       abcfile = parseABCFile(subfile[k]);
       if (!abcfile) continue;

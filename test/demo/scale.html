@@ -9,7 +9,9 @@ var inst = new Instrument('piano');
 function scale() {
   // Change the inst to sound more like a inst.
   // inst.setTimbre('square');
-  inst.play({tempo:100},
+  // 52 keys of an eletric piano
+  inst.play(
+    "A,,,, B,,,,"+
     "C,,, D,,, E,,, F,,, G,,, A,,, B,,," +
     "C,, D,, E,, F,, G,, A,, B,," +
     "C, D, E, F, G, A, B," +
@@ -17,7 +19,8 @@ function scale() {
     "c d e f g a b" +
     "c' d' e' f' g' a' b'" +
     "c'' d'' e'' f'' g'' a'' b''" +
-    "c'''");
+    "c'''"
+  , {tempo:100});
 }
 
 scale();

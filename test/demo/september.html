@@ -206,11 +206,11 @@ var song =
 
 // Play a song from a string in ABC notation.
 inst.play(
-  // The optional first argument is an options object that can set
+  // First comes one or more songs (to start at once).
+  song,
+  // The optional second argument is an options object that can set
   // the tempo or the timbre.
   { tempo:100 },
-  // Next comes one or more songs (to start at once).
-  song,
   // The optional last argument is a callback when the song is done.
   function() {
     document.getElementsByTagName('span')[0].innerHTML = '(Done playing.)';
