@@ -1,15 +1,16 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.musicaljs = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Instrument = require('./instrument');
-var parseABCFile = require('./parser-abc');
+var parser = require('./parser-abc');
 
 // backward compability
 window.Instrument = Instrument;
-window.parseABCFile = parseABCFile;
+window.parseABCFile = parser.parseABCFile;
 
 // The package implementation. Right now, just one class.
 module.exports = {
 	Instrument: Instrument,
-	parseABCFile: parseABCFile
+	parseABCFile: parser.parseABCFile,
+	parseABCfiles: parser.parseABCfilesFromString
 }
 
 },{"./instrument":2,"./parser-abc":3}],2:[function(require,module,exports){
@@ -45,7 +46,9 @@ var midiToFrequency = utils.midiToFrequency;
 var audioCurrentStartTime = utils.audioCurrentStartTime;
 var makeOscillator = utils.makeOscillator;
 var midiToPitch = utils.midiToPitch;
-var parseABCFile = require('./parser-abc');
+var parer = require('./parser-abc');
+var parseABCFile = parer.parseABCFile;
+var parseABCfilesFromString = parer.parseABCfilesFromString;
 
 function Instrument(options) {
   this._atop = getAudioTop();    // Audio context.
@@ -616,11 +619,12 @@ Instrument.prototype.schedule = function(delay, callback) {
 };
 // The high-level sequencing method.
 Instrument.prototype.play = function(abcstring, options, callback) {
+  var files = parseABCfilesFromString(abcstring);
   var songs = [],
       done = callback,
       opts = {}, subfile,
       abcfile, argindex, tempo, timbre, k, delay, maxdelay = 0, attenuate,
-      voicename, stems, ni, vn, j, stem, note, beatsecs, secs, v, files = [];
+      voicename, stems, ni, vn, j, stem, note, beatsecs, secs, v;
   // Look for continuation as last argument.
   if (callback == null && 'function' == typeof(options)) {
     done = options;
@@ -635,17 +639,6 @@ Instrument.prototype.play = function(abcstring, options, callback) {
     for (k in options) if (options.hasOwnProperty(k)) {
       opts[k] = options[k];
     }
-  }
-
-  // Parse any number of ABC files as input.
-  // Handle splitting of ABC subfiles at X: lines.
-  subfile = abcstring.split(/\n(?=X:)/);
-  for (k = 0; k < subfile.length; ++k) {
-    abcfile = parseABCFile(subfile[k]);
-    if (!abcfile) continue;
-    // Ignore files without songs.
-    if (!abcfile.voice) continue;
-    files.push(abcfile);
   }
 
   // Take tempo markings from the first file, and share them.
@@ -762,7 +755,22 @@ var pitchToFrequency = utils.pitchToFrequency;
 var ABCheader = /^([A-Za-z]):\s*(.*)$/;
 var ABCtoken = /(?:\[[A-Za-z]:[^\]]*\])|\s+|%[^\n]*|![^\s!:|\[\]]*!|\+[^+|!]*\+|[_<>@^]?"[^"]*"|\[|\]|>+|<+|(?:(?:\^+|_+|=|)[A-Ga-g](?:,+|'+|))|\(\d+(?::\d+){0,2}|\d*\/\d+|\d+\/?|\/+|[xzXZ]|\[?\|\]?|:?\|:?|::|./g;
 
-module.exports = function parseABCFile(str) {
+module.exports.parseABCfilesFromString = function(abcstring) {
+  var files = [];
+  // Parse any number of ABC files as input.
+  // Handle splitting of ABC subfiles at X: lines.
+  var subfile = abcstring.split(/\n(?=X:)/);
+  for (k = 0; k < subfile.length; ++k) {
+    var abcfile = parseABCFile(subfile[k]);
+    if (!abcfile) continue;
+    // Ignore files without songs.
+    if (!abcfile.voice) continue;
+    files.push(abcfile);
+  }
+  return files;
+}
+
+module.exports.parseABCFile = parseABCFile = function(str) {
   var lines = str.split('\n'),
       result = {},
       context = result, timbre,

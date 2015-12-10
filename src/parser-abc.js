@@ -25,7 +25,22 @@ var pitchToFrequency = utils.pitchToFrequency;
 var ABCheader = /^([A-Za-z]):\s*(.*)$/;
 var ABCtoken = /(?:\[[A-Za-z]:[^\]]*\])|\s+|%[^\n]*|![^\s!:|\[\]]*!|\+[^+|!]*\+|[_<>@^]?"[^"]*"|\[|\]|>+|<+|(?:(?:\^+|_+|=|)[A-Ga-g](?:,+|'+|))|\(\d+(?::\d+){0,2}|\d*\/\d+|\d+\/?|\/+|[xzXZ]|\[?\|\]?|:?\|:?|::|./g;
 
-module.exports = function parseABCFile(str) {
+module.exports.parseABCfilesFromString = function(abcstring) {
+  var files = [];
+  // Parse any number of ABC files as input.
+  // Handle splitting of ABC subfiles at X: lines.
+  var subfile = abcstring.split(/\n(?=X:)/);
+  for (k = 0; k < subfile.length; ++k) {
+    var abcfile = parseABCFile(subfile[k]);
+    if (!abcfile) continue;
+    // Ignore files without songs.
+    if (!abcfile.voice) continue;
+    files.push(abcfile);
+  }
+  return files;
+}
+
+module.exports.parseABCFile = parseABCFile = function(str) {
   var lines = str.split('\n'),
       result = {},
       context = result, timbre,

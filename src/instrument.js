@@ -30,7 +30,9 @@ var midiToFrequency = utils.midiToFrequency;
 var audioCurrentStartTime = utils.audioCurrentStartTime;
 var makeOscillator = utils.makeOscillator;
 var midiToPitch = utils.midiToPitch;
-var parseABCFile = require('./parser-abc');
+var parer = require('./parser-abc');
+var parseABCFile = parer.parseABCFile;
+var parseABCfilesFromString = parer.parseABCfilesFromString;
 
 function Instrument(options) {
   this._atop = getAudioTop();    // Audio context.
@@ -601,11 +603,12 @@ Instrument.prototype.schedule = function(delay, callback) {
 };
 // The high-level sequencing method.
 Instrument.prototype.play = function(abcstring, options, callback) {
+  var files = parseABCfilesFromString(abcstring);
   var songs = [],
       done = callback,
       opts = {}, subfile,
       abcfile, argindex, tempo, timbre, k, delay, maxdelay = 0, attenuate,
-      voicename, stems, ni, vn, j, stem, note, beatsecs, secs, v, files = [];
+      voicename, stems, ni, vn, j, stem, note, beatsecs, secs, v;
   // Look for continuation as last argument.
   if (callback == null && 'function' == typeof(options)) {
     done = options;
@@ -620,17 +623,6 @@ Instrument.prototype.play = function(abcstring, options, callback) {
     for (k in options) if (options.hasOwnProperty(k)) {
       opts[k] = options[k];
     }
-  }
-
-  // Parse any number of ABC files as input.
-  // Handle splitting of ABC subfiles at X: lines.
-  subfile = abcstring.split(/\n(?=X:)/);
-  for (k = 0; k < subfile.length; ++k) {
-    abcfile = parseABCFile(subfile[k]);
-    if (!abcfile) continue;
-    // Ignore files without songs.
-    if (!abcfile.voice) continue;
-    files.push(abcfile);
   }
 
   // Take tempo markings from the first file, and share them.
