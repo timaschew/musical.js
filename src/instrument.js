@@ -628,16 +628,19 @@ Instrument.prototype.play = function(abcstring, options, callback) {
   for (k = 0; k < subfile.length; ++k) {
     abcfile = parseABCFile(subfile[k]);
     if (!abcfile) continue;
-    // Take tempo markings from the first file, and share them.
-    if (!opts.tempo && abcfile.tempo) {
-      opts.tempo = abcfile.tempo;
-      if (abcfile.unitbeat) {
-        opts.tempo *= abcfile.unitbeat / (abcfile.unitnote || 1);
-      }
-    }
     // Ignore files without songs.
     if (!abcfile.voice) continue;
     files.push(abcfile);
+  }
+
+  // Take tempo markings from the first file, and share them.
+  if (files[0]) {
+    if (!opts.tempo && files[0].tempo) {
+      opts.tempo = files[0].tempo;
+      if (files[0].unitbeat) {
+        opts.tempo *= files[0].unitbeat / (files[0].unitnote || 1);
+      }
+    }
   }
 
   // Default tempo to 120 if nothing else is specified.

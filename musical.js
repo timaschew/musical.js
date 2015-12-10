@@ -643,16 +643,19 @@ Instrument.prototype.play = function(abcstring, options, callback) {
   for (k = 0; k < subfile.length; ++k) {
     abcfile = parseABCFile(subfile[k]);
     if (!abcfile) continue;
-    // Take tempo markings from the first file, and share them.
-    if (!opts.tempo && abcfile.tempo) {
-      opts.tempo = abcfile.tempo;
-      if (abcfile.unitbeat) {
-        opts.tempo *= abcfile.unitbeat / (abcfile.unitnote || 1);
-      }
-    }
     // Ignore files without songs.
     if (!abcfile.voice) continue;
     files.push(abcfile);
+  }
+
+  // Take tempo markings from the first file, and share them.
+  if (files[0]) {
+    if (!opts.tempo && files[0].tempo) {
+      opts.tempo = files[0].tempo;
+      if (files[0].unitbeat) {
+        opts.tempo *= files[0].unitbeat / (files[0].unitnote || 1);
+      }
+    }
   }
 
   // Default tempo to 120 if nothing else is specified.
@@ -758,31 +761,6 @@ var pitchToFrequency = utils.pitchToFrequency;
 
 var ABCheader = /^([A-Za-z]):\s*(.*)$/;
 var ABCtoken = /(?:\[[A-Za-z]:[^\]]*\])|\s+|%[^\n]*|![^\s!:|\[\]]*!|\+[^+|!]*\+|[_<>@^]?"[^"]*"|\[|\]|>+|<+|(?:(?:\^+|_+|=|)[A-Ga-g](?:,+|'+|))|\(\d+(?::\d+){0,2}|\d*\/\d+|\d+\/?|\/+|[xzXZ]|\[?\|\]?|:?\|:?|::|./g;
-
-
-module.exports.createFileFromABC = function(string) {
-  var songs = [];
-  // Parse any number of ABC files as input.
-  for (var i=0; i < songs.length; ++i) {
-    // Handle splitting of ABC subfiles at X: lines.
-    subfile = songs[i].split(/\n(?=X:)/);
-    for (k = 0; k < subfile.length; ++k) {
-      abcfile = parseABCFile(subfile[k]);
-      if (!abcfile) continue;
-      // Take tempo markings from the first file, and share them.
-      if (!opts.tempo && abcfile.tempo) {
-        opts.tempo = abcfile.tempo;
-        if (abcfile.unitbeat) {
-          opts.tempo *= abcfile.unitbeat / (abcfile.unitnote || 1);
-        }
-      }
-      // Ignore files without songs.
-      if (!abcfile.voice) continue;
-      files.push(abcfile);
-    }
-  }
-  return songs;
-}
 
 module.exports = function parseABCFile(str) {
   var lines = str.split('\n'),
