@@ -1,6 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.musicaljs = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Instrument = require('./instrument');
 var parser = require('./parser-abc');
+var utils = require('./utils');
 
 // backward compability
 window.Instrument = Instrument;
@@ -10,10 +11,11 @@ window.parseABCFile = parser.parseABCFile;
 module.exports = {
 	Instrument: Instrument,
 	parseABCFile: parser.parseABCFile,
-	parseABCfiles: parser.parseABCfilesFromString
+	parseABCfiles: parser.parseABCfilesFromString,
+	midiToIPN: utils.midiToIPN
 }
 
-},{"./instrument":2,"./parser-abc":3}],2:[function(require,module,exports){
+},{"./instrument":2,"./parser-abc":3,"./utils":4}],2:[function(require,module,exports){
 // All further details of audio handling are encapsulated in the Instrument
 // class, which knows how to synthesize a basic timbre; how to play and
 // schedule a tone; and how to parse and sequence a song written in ABC
@@ -586,6 +588,7 @@ Instrument.prototype.tone = function(pitch, duration, velocity, delay, timbre, o
       now = this.now(),
       time = now + (delay || 0),
       record = {
+        isRest: !!origin.rest,
         time: time,
         on: false,
         frequency: frequency,
@@ -617,7 +620,6 @@ Instrument.prototype.tone = function(pitch, duration, velocity, delay, timbre, o
 Instrument.prototype.schedule = function(delay, callback) {
   this._callbackSet.push({ time: this.now() + delay, callback: callback });
 };
-
 // The high-level sequencing method.
 Instrument.prototype.play = function(abcstring, options, callback) {
   var files = parseABCfilesFromString(abcstring);
@@ -1269,8 +1271,14 @@ module.exports.parseABCFile = parseABCFile = function(str) {
           lastNote.frequency = pitchToFrequency(lastNote.pitch);
           notes.push(lastNote);
         } else if (/[xzXZ]/.test(tokens[index])) {
-          // Grab a rest.
-          lastNote = null;
+          // Grab a rest - simulate a pitch to track noteon and noteoff events for a rest
+          lastNote = {
+            pitch: "c'''''''", // should be out of any playable dimension
+            tie: false,
+            rest: true
+          }
+          lastNote.frequency = pitchToFrequency(lastNote.pitch);
+          notes.push(lastNote);
           index++;
         } else if ('.' == tokens[index]) {
           // A staccato mark applies to the entire stem.
@@ -1330,7 +1338,16 @@ module.exports.parseABCFile = parseABCFile = function(str) {
       lastNote.frequency = pitchToFrequency(lastNote.pitch);
       notes.push(lastNote);
     } else if (index < tokens.length && /^[xzXZ]$/.test(tokens[index])) {
-      // Grab a rest - no pitch.
+      // Grab a rest - simulate a pitch to track noteon and noteoff events for a rest
+      lastNote = {
+        pitch: "c'''''''", // should be out of any playable dimension
+        tie: false,
+        duration: '',
+        time: 1,
+        rest: true
+      }
+      lastNote.frequency = 90000;//pitchToFrequency(lastNote.pitch);
+      notes.push(lastNote);
       index++;
     } else {
       // Something we don't recognize - not a stem.
@@ -1524,6 +1541,32 @@ module.exports.midiToPitch = function(midi) {
 // Converts an ABC pitch to a frequency in Hz.
 module.exports.pitchToFrequency = pitchToFrequency = function(pitch) {
   return midiToFrequency(pitchToMidi(pitch));
+}
+
+// Converts an midi note number to the internation pitch notation
+//
+module.exports.midiToIPN = midiToIPN = function(midiNumber) {
+  var octave = parseInt(midiNumber / 12) - 1;
+  var rest = midiNumber % 12;
+  var key = null;
+  switch (rest) {
+    case 0: key = 'C'; break;
+    case 1: key = 'C#'; break;
+    case 2: key = 'D'; break;
+    case 3: key = 'D#'; break;
+    case 4: key = 'E'; break;
+    case 5: key = 'F'; break;
+    case 6: key = 'F#'; break;
+    case 7: key = 'G'; break;
+    case 8: key = 'G#'; break;
+    case 9: key = 'A'; break;
+    case 10: key = 'A#'; break;
+    case 11: key = 'B'; break;
+  }
+  return {
+    key: key,
+    octave: octave
+  }
 }
 
 // The default sound is a square wave with a pretty quick decay to zero.
