@@ -1,5 +1,6 @@
 var Instrument = require('./instrument');
 var parser = require('./parser-abc');
+var utils = require('./utils');
 
 // backward compability
 window.Instrument = Instrument;
@@ -9,5 +10,6 @@ window.parseABCFile = parser.parseABCFile;
 module.exports = {
 	Instrument: Instrument,
 	parseABCFile: parser.parseABCFile,
-	parseABCfiles: parser.parseABCfilesFromString
+	parseABCfiles: parser.parseABCfilesFromString,
+	midiToIPN: utils.midiToIPN
 }

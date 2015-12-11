@@ -100,6 +100,32 @@ module.exports.pitchToFrequency = pitchToFrequency = function(pitch) {
   return midiToFrequency(pitchToMidi(pitch));
 }
 
+// Converts an midi note number to the internation pitch notation
+//
+module.exports.midiToIPN = midiToIPN = function(midiNumber) {
+  var octave = parseInt(midiNumber / 12) - 1;
+  var rest = midiNumber % 12;
+  var key = null;
+  switch (rest) {
+    case 0: key = 'C'; break;
+    case 1: key = 'C#'; break;
+    case 2: key = 'D'; break;
+    case 3: key = 'D#'; break;
+    case 4: key = 'E'; break;
+    case 5: key = 'F'; break;
+    case 6: key = 'F#'; break;
+    case 7: key = 'G'; break;
+    case 8: key = 'G#'; break;
+    case 9: key = 'A'; break;
+    case 10: key = 'A#'; break;
+    case 11: key = 'B'; break;
+  }
+  return {
+    key: key,
+    octave: octave
+  }
+}
+
 // The default sound is a square wave with a pretty quick decay to zero.
 module.exports.defaultTimbre = defaultTimbre= {
   wave: 'square',   // Oscillator type.
