@@ -534,8 +534,14 @@ module.exports.parseABCFile = parseABCFile = function(str) {
           lastNote.frequency = pitchToFrequency(lastNote.pitch);
           notes.push(lastNote);
         } else if (/[xzXZ]/.test(tokens[index])) {
-          // Grab a rest.
-          lastNote = null;
+          // Grab a rest - simulate a pitch to track noteon and noteoff events for a rest
+          lastNote = {
+            pitch: "c'''''''", // should be out of any playable dimension
+            tie: false,
+            rest: true
+          }
+          lastNote.frequency = pitchToFrequency(lastNote.pitch);
+          notes.push(lastNote);
           index++;
         } else if ('.' == tokens[index]) {
           // A staccato mark applies to the entire stem.
@@ -595,7 +601,16 @@ module.exports.parseABCFile = parseABCFile = function(str) {
       lastNote.frequency = pitchToFrequency(lastNote.pitch);
       notes.push(lastNote);
     } else if (index < tokens.length && /^[xzXZ]$/.test(tokens[index])) {
-      // Grab a rest - no pitch.
+      // Grab a rest - simulate a pitch to track noteon and noteoff events for a rest
+      lastNote = {
+        pitch: "c'''''''", // should be out of any playable dimension
+        tie: false,
+        duration: '',
+        time: 1,
+        rest: true
+      }
+      lastNote.frequency = 90000;//pitchToFrequency(lastNote.pitch);
+      notes.push(lastNote);
       index++;
     } else {
       // Something we don't recognize - not a stem.

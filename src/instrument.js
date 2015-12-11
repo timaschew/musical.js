@@ -570,6 +570,7 @@ Instrument.prototype.tone = function(pitch, duration, velocity, delay, timbre, o
       now = this.now(),
       time = now + (delay || 0),
       record = {
+        isRest: !!origin.rest,
         time: time,
         on: false,
         frequency: frequency,
