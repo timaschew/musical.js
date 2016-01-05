@@ -65,6 +65,7 @@ function Instrument(options) {
   this._callbackSet = [];        // A set of scheduled callbacks.
   this._handlers = {};           // 'noteon' and 'noteoff' handlers.
   this._now = null;              // A cached current-time value.
+  this._recordCounter = 0;
   if (isAudioPresent()) {
     this.silence();              // Initializes top-level audio node.
   }
@@ -588,6 +589,7 @@ Instrument.prototype.tone = function(pitch, duration, velocity, delay, timbre, o
       now = this.now(),
       time = now + (delay || 0),
       record = {
+        index: this._recordCounter++,
         isRest: !!origin.rest,
         time: time,
         on: false,
